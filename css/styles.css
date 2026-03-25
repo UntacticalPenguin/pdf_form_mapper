@@ -54,7 +54,7 @@ body {
 .btn.btn-primary { border-color: var(--accent); color: var(--accent); }
 .btn.btn-primary:hover:not(:disabled) { background: var(--accent); color: #fff; }
 .btn.btn-danger { border-color: var(--danger); color: var(--danger); }
-.btn.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn.btn-danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
 
 /* COLOR PICKER */
 .color-label {
@@ -209,7 +209,6 @@ body {
   padding: 6px 10px;
   border-radius: 4px;
   font-size: 12px;
-  white-space: nowrap;
   pointer-events: none;
   z-index: 1000;
   width: max-content;
