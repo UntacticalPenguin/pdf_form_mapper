@@ -48,27 +48,33 @@ async function _handleFileSelect(e) {
 
   revokePdf();
 
-  // Read into ArrayBuffer — stays in JS memory only, never written to disk or storage
-  const arrayBuffer = await file.arrayBuffer();
-  e.target.value = '';  // allow re-uploading same file
+  try {
+    // Read into ArrayBuffer — stays in JS memory only, never written to disk or storage
+    const arrayBuffer = await file.arrayBuffer();
+    e.target.value = '';  // allow re-uploading same file
 
-  pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  pageAnnotations = {};
+    pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    pageAnnotations = {};
 
-  await _renderAllPages();
-  await _extractAllAnnotations();
+    await _renderAllPages();
+    await _extractAllAnnotations();
 
-  // Enable toolbar buttons
-  document.getElementById('btn-add-rect').disabled = false;
-  document.getElementById('btn-toggle-fields').disabled = false;
-  document.getElementById('btn-dl-json').disabled = false;
-  document.getElementById('btn-dl-csv').disabled = false;
+    // Enable toolbar buttons
+    document.getElementById('btn-add-rect').disabled = false;
+    document.getElementById('btn-toggle-fields').disabled = false;
+    document.getElementById('btn-dl-json').disabled = false;
+    document.getElementById('btn-dl-csv').disabled = false;
 
-  // Hide drop hint
-  document.getElementById('drop-hint').style.display = 'none';
+    // Hide drop hint
+    document.getElementById('drop-hint').style.display = 'none';
 
-  // Notify other modules
-  document.dispatchEvent(new CustomEvent('pdf-loaded', { detail: { pageCount: pdfDoc.numPages } }));
+    // Notify other modules
+    document.dispatchEvent(new CustomEvent('pdf-loaded', { detail: { pageCount: pdfDoc.numPages } }));
+  } catch (err) {
+    revokePdf();
+    alert(`Failed to load PDF: ${err.message || err}`);
+    e.target.value = '';
+  }
 }
 
 async function _renderAllPages() {
@@ -86,8 +92,8 @@ async function _renderAllPages() {
     wrapper.style.height = `${viewport.height}px`;
 
     const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
     const overlay = document.createElement('div');
@@ -104,11 +110,13 @@ async function _extractAllAnnotations() {
   for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
     const page = await pdfDoc.getPage(pageNum);
     const annotations = await page.getAnnotations();
-    pageAnnotations[pageNum] = annotations.filter(a => a.subtype === 'Widget');
+    // Filter to Widget annotations with valid rect (skip null-rect annotations)
+    pageAnnotations[pageNum] = annotations.filter(a => a.subtype === 'Widget' && a.rect);
   }
 }
 
 function _toggleFieldOverlay() {
+  if (!pdfDoc) return;
   fieldOverlayVisible = !fieldOverlayVisible;
   document.getElementById('btn-toggle-fields').classList.toggle('active', fieldOverlayVisible);
 
@@ -148,5 +156,8 @@ export function revokePdf() {
     pdfDoc = null;
   }
   pageAnnotations = {};
+  // Clean up overlay DOM elements and button active state
+  document.querySelectorAll('.pdf-field-el').forEach(el => el.remove());
+  document.getElementById('btn-toggle-fields')?.classList.remove('active');
   fieldOverlayVisible = false;
 }
