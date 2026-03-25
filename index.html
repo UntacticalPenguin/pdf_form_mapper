@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; worker-src blob:; img-src 'self' blob: data:; connect-src 'none';">
+  <!-- NOTE: 'unsafe-inline' for style-src is required because accent color theming
+       uses document.documentElement.style.setProperty() which is treated as inline style.
+       This is an accepted trade-off for a pure-client static app with no server-side nonce. -->
+  <title>PDF Form Mapper</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- TOOLBAR -->
+  <header id="toolbar">
+    <span class="app-title">PDF Form Mapper</span>
+    <div class="toolbar-controls">
+      <!-- Upload PDF -->
+      <label class="btn" for="pdf-upload">
+        Upload PDF
+        <input type="file" id="pdf-upload" accept=".pdf" hidden>
+      </label>
+      <!-- Load JSON -->
+      <label class="btn" for="json-upload">
+        Load JSON
+        <input type="file" id="json-upload" accept=".json" hidden>
+      </label>
+      <!-- Add Rectangle -->
+      <button id="btn-add-rect" class="btn" disabled>+ Add Field</button>
+      <!-- Toggle PDF field borders -->
+      <button id="btn-toggle-fields" class="btn" disabled>
+        Toggle PDF Fields
+        <span class="tooltip-anchor">?<span class="tooltip-text">PLACEHOLDER: explain what this does</span></span>
+      </button>
+      <!-- Color picker -->
+      <label class="color-label">
+        Rect Color
+        <input type="color" id="rect-color" value="#4a9eff">
+      </label>
+      <!-- Download JSON -->
+      <button id="btn-dl-json" class="btn btn-primary" disabled>Download JSON</button>
+      <!-- Download CSV -->
+      <button id="btn-dl-csv" class="btn btn-primary" disabled>Download CSV</button>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main id="main-layout">
+    <!-- PDF VIEWER -->
+    <div id="pdf-viewer">
+      <div id="drop-hint">
+        <p>Upload a PDF to get started</p>
+        <p class="sub">PLACEHOLDER: add usage instructions here</p>
+      </div>
+      <div id="pages-container"></div>
+    </div>
+
+    <!-- PROPERTIES PANEL -->
+    <aside id="properties-panel" class="hidden">
+      <h3>Field Properties</h3>
+      <label>
+        Label (HTTP POST key)
+        <span class="tooltip-anchor">?<span class="tooltip-text">PLACEHOLDER: label tooltip</span></span>
+        <input type="text" id="prop-label" placeholder="e.g. first_name">
+      </label>
+      <label>
+        Type
+        <span class="tooltip-anchor">?<span class="tooltip-text">PLACEHOLDER: type tooltip</span></span>
+        <select id="prop-type">
+          <option value="">— select type —</option>
+          <option value="text">text</option>
+          <option value="checkbox">checkbox</option>
+          <option value="radio">radio</option>
+        </select>
+      </label>
+      <button id="prop-delete" class="btn btn-danger">Delete Field</button>
+      <p id="prop-no-selection" class="muted">Click a rectangle to edit it.</p>
+    </aside>
+  </main>
+
+  <!-- INFO SECTION -->
+  <footer id="info-section">
+    <h4>About</h4>
+    <p>PLACEHOLDER: add general information, contact details, etc.</p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
