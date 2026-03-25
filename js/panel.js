@@ -1,7 +1,6 @@
 // panel.js — properties panel: edit label, type; delete rect
 
 import { getRect, updateRect, deleteRect, getSelectedId } from './rect-manager.js';
-import { renderRectEl } from './interactions.js';
 
 export function initPanel() {
   const panel      = document.getElementById('properties-panel');
@@ -15,6 +14,18 @@ export function initPanel() {
     typeSelect.closest('label').style.display = show ? '' : 'none';
     deleteBtn.style.display  = show ? '' : 'none';
     noSel.style.display      = show ? 'none' : '';
+  }
+
+  // Shared delete logic — used by both the button and the keyboard shortcut.
+  // Removes from state AND removes ALL matching DOM nodes (handles re-render duplicates).
+  function _deleteSelected() {
+    const id = getSelectedId();
+    if (!id) return;
+    deleteRect(id);
+    document.querySelectorAll(`[data-rect-id="${id}"]`).forEach(el => el.remove());
+    _showFields(false);
+    document.dispatchEvent(new CustomEvent('rect-deselected'));
+    document.dispatchEvent(new CustomEvent('rect-list-changed'));
   }
 
   // Always show panel after PDF loaded; hide input fields until rect selected
@@ -49,14 +60,17 @@ export function initPanel() {
     }
   });
 
-  deleteBtn.addEventListener('click', () => {
-    const id = getSelectedId();
-    if (!id) return;
-    deleteRect(id);
-    document.querySelector(`[data-rect-id="${id}"]`)?.remove();
-    _showFields(false);
-    document.dispatchEvent(new CustomEvent('rect-deselected'));
-    document.dispatchEvent(new CustomEvent('rect-list-changed'));
+  // Delete button
+  deleteBtn.addEventListener('click', _deleteSelected);
+
+  // Keyboard shortcut: Delete key (also "Entf" on German keyboards — same event)
+  // Guard: do not fire while the user is typing in an input or select.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Delete') return;
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    e.preventDefault();
+    _deleteSelected();
   });
 
   // Init: hide fields (panel itself remains hidden until PDF loads)
