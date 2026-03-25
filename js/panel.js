@@ -1,6 +1,6 @@
 // panel.js — properties panel: edit label, type; delete rect
 
-import { getRect, updateRect, deleteRect, getSelectedId, getAllRects } from './rect-manager.js';
+import { getRect, updateRect, deleteRect, getSelectedId } from './rect-manager.js';
 import { renderRectEl } from './interactions.js';
 
 export function initPanel() {

@@ -65,8 +65,10 @@ async function _downloadCsv(renderer) {
     const wrapper = document.querySelector(`.page-wrapper[data-page="${pageNum}"]`);
     if (!wrapper) continue;
 
-    const W = wrapper.offsetWidth;
-    const H = wrapper.offsetHeight;
+    // Use getBoundingClientRect for consistency with how rect percentages were stored in interactions.js
+    const wrapperBcr = wrapper.getBoundingClientRect();
+    const W = wrapperBcr.width;
+    const H = wrapperBcr.height;
     const pdfPageHeight = H / scale;
 
     for (const rect of rects) {
