@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; worker-src blob:; img-src 'self' blob: data:; connect-src 'none';">
-  <!-- NOTE: 'unsafe-inline' for style-src is required because accent color theming
-       uses document.documentElement.style.setProperty() which is treated as inline style.
-       This is an accepted trade-off for a pure-client static app with no server-side nonce. -->
+  <!-- NOTE: 'unsafe-inline' for style-src is required because theming uses
+       document.documentElement.style.setProperty() which is treated as inline style. -->
   <title>PDF Form Mapper</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -31,9 +30,9 @@
       <!-- Toggle PDF field borders -->
       <button id="btn-toggle-fields" class="btn" disabled>
         Toggle PDF Fields
-        <span class="tooltip-anchor">?<span class="tooltip-text">Shows the actual form field boundaries embedded in the PDF as red outlines. Use this to verify your drawn rectangles align with the real fields.</span></span>
+        <span class="tooltip-anchor" data-tooltip="Shows the actual form field boundaries embedded in the PDF as red outlines. Use this to verify your drawn rectangles align with the real fields.">?</span>
       </button>
-      <!-- Color picker -->
+      <!-- Color picker (rect border color only) -->
       <label class="color-label">
         Rect Color
         <input type="color" id="rect-color" value="#4a9eff">
@@ -42,18 +41,31 @@
       <button id="btn-dl-json" class="btn btn-primary" disabled>Download JSON</button>
       <!-- Download CSV -->
       <button id="btn-dl-csv" class="btn btn-primary" disabled>Download CSV</button>
+      <!-- Light/Dark Mode Toggle -->
+      <button id="btn-theme" class="btn">Light Mode</button>
     </div>
   </header>
 
   <!-- MAIN LAYOUT -->
   <main id="main-layout">
+    <!-- FIELDS SIDEBAR (left) -->
+    <aside id="fields-sidebar" class="hidden">
+      <div id="fields-sidebar-header">Fields</div>
+      <div id="sidebar-list">
+        <p id="sidebar-empty">No fields yet.</p>
+      </div>
+    </aside>
+
     <!-- PDF VIEWER -->
     <div id="pdf-viewer">
       <div id="drop-hint">
         <p>Upload a PDF to get started</p>
         <p class="sub">Upload a PDF, draw rectangles over form fields, label them, then download JSON or CSV.</p>
       </div>
-      <div id="pages-container"></div>
+      <!-- zoom-container is sized by JS to enable proper scroll with transform:scale -->
+      <div id="zoom-container">
+        <div id="pages-container"></div>
+      </div>
     </div>
 
     <!-- PROPERTIES PANEL -->
@@ -61,12 +73,12 @@
       <h3>Field Properties</h3>
       <label>
         Label (HTTP POST key)
-        <span class="tooltip-anchor">?<span class="tooltip-text">Enter the HTTP POST key name (e.g. "first_name") that this PDF field corresponds to. This is the key from the incoming POST request.</span></span>
+        <span class="tooltip-anchor" data-tooltip="Enter the HTTP POST key name (e.g. &quot;first_name&quot;) that this PDF field corresponds to. This is the key from the incoming POST request.">?</span>
         <input type="text" id="prop-label" placeholder="e.g. first_name">
       </label>
       <label>
         Type
-        <span class="tooltip-anchor">?<span class="tooltip-text">text: a regular text input field | checkbox: a single on/off checkbox | radio: one of a group of radio buttons</span></span>
+        <span class="tooltip-anchor" data-tooltip="text: a regular text input field | checkbox: a single on/off checkbox | radio: one of a group of radio buttons">?</span>
         <select id="prop-type">
           <option value="">— select type —</option>
           <option value="text">text</option>
@@ -82,9 +94,12 @@
   <!-- INFO SECTION -->
   <footer id="info-section">
     <h4>About</h4>
-    <p>This tool creates position-based JSON mappings for PDF forms — no server involved, PDFs never leave your browser. Upload a PDF, draw rectangles over the fields, assign your HTTP POST key names, and download the mapping.</p>
-    <p style="margin-top: 8px;">Questions or issues? Contact: <a href="mailto:PLACEHOLDER@example.com" style="color: var(--accent);">PLACEHOLDER</a></p>
+    <p>Position-based JSON mappings for PDF forms — no server involved, PDFs never leave your browser. Upload a PDF, draw rectangles, assign POST key names, download the mapping.</p>
+    <p style="margin-top: 4px;">Questions or issues? Contact: <a href="mailto:PLACEHOLDER@example.com" style="color: var(--accent);">PLACEHOLDER</a></p>
   </footer>
+
+  <!-- Global tooltip: position:fixed so it escapes any overflow clipping -->
+  <div id="global-tooltip" role="tooltip" aria-hidden="true"></div>
 
   <script type="module" src="js/main.js"></script>
 </body>

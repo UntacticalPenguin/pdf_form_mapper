@@ -33,28 +33,20 @@ export function initPanel() {
 
   document.addEventListener('rect-deselected', () => _showFields(false));
 
-  // Live-update label text on the rect element
+  // Live-update label — also refresh sidebar so the name updates there too
   labelInput.addEventListener('input', () => {
     const id = getSelectedId();
     if (!id) return;
     updateRect(id, { label: labelInput.value });
-
-    // Try to update existing label span first; if absent, re-render the whole rect
-    const rectEl = document.querySelector(`[data-rect-id="${id}"]`);
-    if (!rectEl) return;
-    let lbl = rectEl.querySelector('.rect-label');
-    if (lbl) {
-      lbl.textContent = labelInput.value;  // safe: textContent, not innerHTML
-    } else if (labelInput.value) {
-      // Label tag didn't exist — re-render rect to add it
-      const overlay = rectEl.closest('.page-overlay');
-      if (overlay) renderRectEl(getRect(id), overlay);
-    }
+    document.dispatchEvent(new CustomEvent('rect-list-changed'));
   });
 
   typeSelect.addEventListener('change', () => {
     const id = getSelectedId();
-    if (id) updateRect(id, { type: typeSelect.value });
+    if (id) {
+      updateRect(id, { type: typeSelect.value });
+      document.dispatchEvent(new CustomEvent('rect-list-changed'));
+    }
   });
 
   deleteBtn.addEventListener('click', () => {
@@ -63,6 +55,8 @@ export function initPanel() {
     deleteRect(id);
     document.querySelector(`[data-rect-id="${id}"]`)?.remove();
     _showFields(false);
+    document.dispatchEvent(new CustomEvent('rect-deselected'));
+    document.dispatchEvent(new CustomEvent('rect-list-changed'));
   });
 
   // Init: hide fields (panel itself remains hidden until PDF loads)

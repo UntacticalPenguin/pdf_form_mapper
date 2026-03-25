@@ -5,10 +5,22 @@
   --bg-tertiary: #36393f;
   --text-primary: #ffffff;
   --text-muted: #99aab5;
-  --accent: #4a9eff;          /* updated dynamically via JS */
+  --accent: #5BC8F5;          /* sky blue, fixed UI accent */
   --danger: #e74c3c;
   --border: #40444b;
   --toolbar-height: 56px;
+}
+
+/* LIGHT MODE */
+body.light-mode {
+  --bg-primary: #F0EDE6;
+  --bg-secondary: #E8E4DC;
+  --bg-tertiary: #DDD8CE;
+  --text-primary: #1a1a1a;
+  --text-muted: #5a5a5a;
+  --accent: #D05000;          /* dark orange accent in light mode */
+  --danger: #c0392b;
+  --border: #C4BDB0;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,7 +61,7 @@ body {
   transition: background 0.15s;
   white-space: nowrap;
 }
-.btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+.btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn.btn-primary { border-color: var(--accent); color: var(--accent); }
 .btn.btn-primary:hover:not(:disabled) { background: var(--accent); color: #fff; }
@@ -71,6 +83,55 @@ body {
   overflow: hidden;
 }
 
+/* FIELDS SIDEBAR (left) */
+#fields-sidebar {
+  width: 190px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+#fields-sidebar.hidden { display: none; }
+#fields-sidebar-header {
+  padding: 11px 12px 9px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#sidebar-list { display: flex; flex-direction: column; }
+.sidebar-item {
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+.sidebar-item:hover { background: var(--bg-tertiary); }
+.sidebar-item.active { background: var(--accent); color: #fff; }
+.sidebar-item .item-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-item .item-meta { font-size: 10px; color: var(--text-muted); }
+.sidebar-item.active .item-meta { color: rgba(255,255,255,0.72); }
+#sidebar-empty {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* PDF VIEWER */
 #pdf-viewer {
   flex: 1;
@@ -87,62 +148,67 @@ body {
 }
 #drop-hint p { margin-bottom: 8px; font-size: 16px; }
 #drop-hint .sub { font-size: 13px; }
-#pages-container { display: flex; flex-direction: column; gap: 24px; }
+
+/* ZOOM CONTAINER — sized by JS to match scaled content */
+#zoom-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#pages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  transform-origin: top center;
+  flex-shrink: 0;
+}
 
 /* PAGE WRAPPER: stacks canvas + overlay */
 .page-wrapper {
   position: relative;
   box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-  line-height: 0; /* remove canvas gap */
+  line-height: 0;
 }
 .page-wrapper canvas { display: block; }
 .page-overlay {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  pointer-events: auto; /* rects use stopPropagation; background clicks reach overlay for deselect/draw */
+  pointer-events: auto;
 }
+/* Draw mode: crosshair cursor on overlay */
+.page-overlay.draw-mode { cursor: crosshair; }
 
-/* RECTANGLE */
+/* RECTANGLE — 4px border (doubled) */
 .rect-el {
   position: absolute;
-  border: 2px solid var(--accent);
+  border: 4px solid var(--accent);
   border-radius: 2px;
   cursor: move;
   pointer-events: all;
   box-sizing: border-box;
 }
 .rect-el.selected { outline: 2px solid white; outline-offset: 2px; }
-.rect-el .rect-label {
-  position: absolute;
-  top: -20px; left: 0;
-  font-size: 11px;
-  background: var(--accent);
-  color: #fff;
-  padding: 1px 4px;
-  border-radius: 2px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-/* Corner resize handles */
+
+/* Corner resize handles — 14px (doubled from 8px) */
 .resize-handle {
   position: absolute;
-  width: 8px; height: 8px;
+  width: 14px; height: 14px;
   background: white;
-  border: 1px solid var(--accent);
+  border: 2px solid var(--accent);
   border-radius: 50%;
   pointer-events: all;
   z-index: 10;
 }
-.resize-handle.tl { top: -4px; left: -4px; cursor: nw-resize; }
-.resize-handle.tr { top: -4px; right: -4px; cursor: ne-resize; }
-.resize-handle.bl { bottom: -4px; left: -4px; cursor: sw-resize; }
-.resize-handle.br { bottom: -4px; right: -4px; cursor: se-resize; }
+.resize-handle.tl { top: -7px; left: -7px; cursor: nw-resize; }
+.resize-handle.tr { top: -7px; right: -7px; cursor: ne-resize; }
+.resize-handle.bl { bottom: -7px; left: -7px; cursor: sw-resize; }
+.resize-handle.br { bottom: -7px; right: -7px; cursor: se-resize; }
 
 /* PDF FIELD OVERLAY (red borders, toggleable) */
 .pdf-field-el {
   position: absolute;
-  border: 2px solid red;
+  border: 4px solid red;
   pointer-events: none;
   box-sizing: border-box;
 }
@@ -160,8 +226,10 @@ body {
   flex-shrink: 0;
 }
 #properties-panel.hidden { display: none; }
-#properties-panel h3 { font-size: 14px; color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: 0.05em; }
+#properties-panel h3 {
+  font-size: 14px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
 #properties-panel label {
   display: flex; flex-direction: column; gap: 4px; font-size: 13px;
 }
@@ -181,7 +249,7 @@ body {
 }
 .muted { color: var(--text-muted); font-size: 12px; }
 
-/* TOOLTIPS */
+/* TOOLTIP ANCHOR — the ? circle */
 .tooltip-anchor {
   display: inline-flex;
   align-items: center;
@@ -192,40 +260,39 @@ body {
   border-radius: 50%;
   font-size: 11px;
   cursor: default;
-  position: relative;
   color: var(--text-muted);
   margin-left: 4px;
   flex-shrink: 0;
+  position: relative;
 }
-.tooltip-text {
+
+/* GLOBAL TOOLTIP — position:fixed, escapes all overflow clipping */
+#global-tooltip {
   display: none;
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  z-index: 99999;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   color: var(--text-primary);
   padding: 6px 10px;
   border-radius: 4px;
   font-size: 12px;
-  pointer-events: none;
-  z-index: 1000;
-  width: max-content;
-  max-width: 240px;
+  max-width: 260px;
   white-space: normal;
+  pointer-events: none;
+  line-height: 1.4;
 }
-.tooltip-anchor:hover .tooltip-text { display: block; }
+#global-tooltip.visible { display: block; }
 
-/* INFO FOOTER */
+/* INFO FOOTER — half as tall */
 #info-section {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
-  padding: 16px 24px;
-  font-size: 13px;
+  padding: 8px 24px;
+  font-size: 11px;
   color: var(--text-muted);
 }
-#info-section h4 { margin-bottom: 6px; color: var(--text-primary); }
+#info-section h4 { margin-bottom: 3px; color: var(--text-primary); font-size: 12px; }
 
 /* Active/toggle state for toolbar buttons */
 .btn.active {
@@ -234,7 +301,7 @@ body {
   color: #fff;
 }
 
-/* PDF field overlay toggle button — red tint when active (overrides .btn.active blue) */
+/* PDF field overlay toggle button — red tint when active */
 #btn-toggle-fields.active {
   background: var(--bg-tertiary);
   border-color: #e74c3c;

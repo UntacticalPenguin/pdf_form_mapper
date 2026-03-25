@@ -18,6 +18,7 @@ export function initInteractions(renderer) {
     const btn = document.getElementById('btn-add-rect');
     btn.classList.toggle('active', drawMode);
     btn.textContent = drawMode ? '✕ Cancel' : '+ Add Field';
+    _updateOverlayCursors();
   });
 
   // Reset draw mode and re-attach overlay listeners after each PDF load
@@ -26,6 +27,7 @@ export function initInteractions(renderer) {
     document.getElementById('btn-add-rect').classList.remove('active');
     document.getElementById('btn-add-rect').textContent = '+ Add Field';
     _attachOverlayListeners();
+    _updateOverlayCursors();
   });
 
   // Global move/up handlers (must be on document to handle fast mouse moves)
@@ -39,9 +41,14 @@ export function initInteractions(renderer) {
 
 function _attachOverlayListeners() {
   document.querySelectorAll('.page-overlay').forEach(overlay => {
-    // Remove previous listener to avoid duplicate registration on re-load
     overlay.removeEventListener('mousedown', _onOverlayMouseDown);
     overlay.addEventListener('mousedown', _onOverlayMouseDown);
+  });
+}
+
+function _updateOverlayCursors() {
+  document.querySelectorAll('.page-overlay').forEach(overlay => {
+    overlay.classList.toggle('draw-mode', drawMode);
   });
 }
 
@@ -54,8 +61,7 @@ function _onOverlayMouseDown(e) {
     const { x, y } = _relCoords(overlay, e.clientX, e.clientY);
     const previewEl = document.createElement('div');
     previewEl.className = 'rect-el';
-    previewEl.style.borderColor = getComputedStyle(document.documentElement)
-                                    .getPropertyValue('--accent').trim();
+    previewEl.style.borderColor = document.getElementById('rect-color').value;
     previewEl.style.left = `${x}px`;
     previewEl.style.top  = `${y}px`;
     previewEl.style.width  = '0px';
@@ -131,8 +137,7 @@ function _onMouseUp(e) {
 
     if (width > 5 && height > 5) {
       const { W, H } = _overlaySize(overlay);
-      const color = getComputedStyle(document.documentElement)
-                      .getPropertyValue('--accent').trim();
+      const color = document.getElementById('rect-color').value;
       const rect = addRect(pageNum, {
         x_pct: left / W, y_pct: top / H,
         w_pct: width / W, h_pct: height / H,
@@ -140,12 +145,14 @@ function _onMouseUp(e) {
       });
       renderRectEl(rect, overlay);
       _selectRect(rect.id, overlay);
+      document.dispatchEvent(new CustomEvent('rect-list-changed'));
     }
 
     // Exit draw mode
     drawMode = false;
     document.getElementById('btn-add-rect').classList.remove('active');
     document.getElementById('btn-add-rect').textContent = '+ Add Field';
+    _updateOverlayCursors();
   }
 
   dragState = null;
@@ -165,15 +172,6 @@ export function renderRectEl(rect, overlay) {
   el.style.width  = `${rect.w_pct * W}px`;
   el.style.height = `${rect.h_pct * H}px`;
   el.style.borderColor = rect.color;
-
-  // Label tag (shown above rect)
-  if (rect.label) {
-    const lbl = document.createElement('span');
-    lbl.className = 'rect-label';
-    lbl.textContent = rect.label;       // textContent — safe, no innerHTML
-    lbl.style.background = rect.color;
-    el.appendChild(lbl);
-  }
 
   // Four corner resize handles
   for (const pos of ['tl', 'tr', 'bl', 'br']) {
@@ -216,6 +214,15 @@ export function reRenderAllRects(allRects) {
     if (!overlay) continue;
     for (const rect of pageRects) renderRectEl(rect, overlay);
   }
+  document.dispatchEvent(new CustomEvent('rect-list-changed'));
+}
+
+/**
+ * Programmatically select a rect by id — used by the sidebar.
+ * Exported so sidebar.js can call it without coupling to dragState.
+ */
+export function selectRectById(id, overlay) {
+  _selectRect(id, overlay);
 }
 
 function _rerenderRect(rectId, overlay) {
@@ -241,7 +248,6 @@ function _relCoords(overlay, clientX, clientY) {
 }
 
 function _overlaySize(overlay) {
-  // Use getBoundingClientRect for consistency with _relCoords (same coordinate space)
   const r = overlay.getBoundingClientRect();
   return { W: r.width, H: r.height };
 }
