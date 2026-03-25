@@ -58,7 +58,7 @@ function _onOverlayMouseDown(e) {
 
   if (drawMode) {
     e.stopPropagation();
-    const { x, y } = _relCoords(overlay, e.clientX, e.clientY);
+    const { x, y } = _relCoordsLocal(overlay, e.clientX, e.clientY);
     const previewEl = document.createElement('div');
     previewEl.className = 'rect-el';
     previewEl.style.borderColor = document.getElementById('rect-color').value;
@@ -83,7 +83,7 @@ function _onMouseMove(e) {
 
   if (dragState.type === 'draw') {
     const { overlay, startX, startY, previewEl } = dragState;
-    const { x, y } = _relCoords(overlay, e.clientX, e.clientY);
+    const { x, y } = _relCoordsLocal(overlay, e.clientX, e.clientY);
     previewEl.style.left   = `${Math.min(x, startX)}px`;
     previewEl.style.top    = `${Math.min(y, startY)}px`;
     previewEl.style.width  = `${Math.abs(x - startX)}px`;
@@ -131,12 +131,12 @@ function _onMouseUp(e) {
     const { pageNum, overlay, startX, startY, previewEl } = dragState;
     previewEl.remove();
 
-    const { x, y } = _relCoords(overlay, e.clientX, e.clientY);
+    const { x, y } = _relCoordsLocal(overlay, e.clientX, e.clientY);
     const left = Math.min(x, startX), top = Math.min(y, startY);
     const width = Math.abs(x - startX), height = Math.abs(y - startY);
 
     if (width > 5 && height > 5) {
-      const { W, H } = _overlaySize(overlay);
+      const W = overlay.offsetWidth, H = overlay.offsetHeight;
       const color = document.getElementById('rect-color').value;
       const rect = addRect(pageNum, {
         x_pct: left / W, y_pct: top / H,
@@ -163,7 +163,9 @@ export function renderRectEl(rect, overlay) {
   // Remove stale element if re-rendering
   overlay.querySelector(`[data-rect-id="${rect.id}"]`)?.remove();
 
-  const { W, H } = _overlaySize(overlay);
+  // Use local (pre-transform) dimensions — style.left/top are in local coordinate space.
+  const W = overlay.offsetWidth;
+  const H = overlay.offsetHeight;
   const el = document.createElement('div');
   el.className = 'rect-el';
   // Preserve selected state when re-rendering during drag
@@ -248,11 +250,20 @@ function _deselectAll() {
   setSelectedId(null);
 }
 
-function _relCoords(overlay, clientX, clientY) {
-  const bbox = overlay.getBoundingClientRect();
-  return { x: clientX - bbox.left, y: clientY - bbox.top };
+// Returns mouse position in the overlay's LOCAL coordinate space (before CSS transform).
+// style.left/top are in local space, so this must be used for draw/render operations.
+function _relCoordsLocal(overlay, clientX, clientY) {
+  const bbox   = overlay.getBoundingClientRect();
+  const scaleX = bbox.width  / overlay.offsetWidth;
+  const scaleY = bbox.height / overlay.offsetHeight;
+  return {
+    x: (clientX - bbox.left) / scaleX,
+    y: (clientY - bbox.top)  / scaleY,
+  };
 }
 
+// Returns overlay size in VIEWPORT (post-transform) space.
+// Used only for move/resize delta→fraction conversion: viewport_delta / viewport_W = correct fraction.
 function _overlaySize(overlay) {
   const r = overlay.getBoundingClientRect();
   return { W: r.width, H: r.height };
