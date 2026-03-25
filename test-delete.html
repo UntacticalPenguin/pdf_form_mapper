@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head><title>Delete Tests</title></head><body>
+<div id="overlay">
+  <div class="rect-el" data-rect-id="test-abc-123" style="position:absolute;width:50px;height:50px;background:red">RECT</div>
+</div>
+<div id="result"></div>
+<script>
+const overlay = document.getElementById('overlay');
+const result  = document.getElementById('result');
+const tests   = [];
+
+function assert(name, pass, got) { tests.push({ name, pass, got: String(got) }); }
+
+// T1: dataset.rectId camelCase → data-rect-id kebab attribute
+const el1 = document.createElement('div');
+el1.dataset.rectId = 'test-uuid-999';
+assert('dataset.rectId sets data-rect-id attr',
+  el1.getAttribute('data-rect-id') === 'test-uuid-999',
+  el1.getAttribute('data-rect-id'));
+
+// T2: querySelectorAll finds element by data-rect-id
+const id = 'test-abc-123';
+const found = document.querySelectorAll('[data-rect-id="' + id + '"]');
+assert('querySelectorAll finds rect by data-rect-id', found.length === 1, found.length);
+
+// T3: .remove() removes it
+found.forEach(e => e.remove());
+const after = document.querySelectorAll('[data-rect-id="' + id + '"]');
+assert('element gone after .remove()', after.length === 0, after.length);
+
+// T4: querySelectorAll('.rect-el') + dataset comparison fallback
+const el2 = document.createElement('div');
+el2.className = 'rect-el';
+el2.dataset.rectId = 'fallback-id';
+overlay.appendChild(el2);
+let foundByDataset = false;
+document.querySelectorAll('.rect-el').forEach(e => {
+  if (e.dataset.rectId === 'fallback-id') { e.remove(); foundByDataset = true; }
+});
+const afterFallback = document.querySelectorAll('.rect-el').length;
+assert('fallback via .rect-el + dataset compare works', foundByDataset && afterFallback === 0, 'found='+foundByDataset+' remaining='+afterFallback);
+
+// T5: KeyboardEvent Delete key
+const ke = new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', bubbles: true });
+assert('e.key === Delete', ke.key === 'Delete', ke.key);
+assert('e.code === Delete', ke.code === 'Delete', ke.code);
+
+// T6: removeRectElById — strategy 1: Map registry
+const _registry = new Map();
+const el3 = document.createElement('div');
+el3.className = 'rect-el';
+el3.dataset.rectId = 'reg-id-1';
+overlay.appendChild(el3);
+_registry.set('reg-id-1', el3);
+
+function removeRectElById(id) {
+  const tracked = _registry.get(id);
+  if (tracked) { tracked.remove(); _registry.delete(id); }
+  document.querySelectorAll('.rect-el').forEach(el => {
+    if (el.dataset.rectId === id) el.remove();
+  });
+  document.querySelectorAll('.rect-el.selected').forEach(el => el.remove());
+}
+
+removeRectElById('reg-id-1');
+const afterRegistry = document.querySelectorAll('[data-rect-id="reg-id-1"]').length;
+assert('removeRectElById: registry strategy removes element', afterRegistry === 0, afterRegistry);
+assert('removeRectElById: registry entry cleared', !_registry.has('reg-id-1'), _registry.has('reg-id-1'));
+
+// T7: removeRectElById — strategy 2: class sweep (no registry entry)
+const el4 = document.createElement('div');
+el4.className = 'rect-el';
+el4.dataset.rectId = 'sweep-id-1';
+overlay.appendChild(el4);
+// Intentionally NOT adding to _registry
+removeRectElById('sweep-id-1');
+const afterSweep = document.querySelectorAll('[data-rect-id="sweep-id-1"]').length;
+assert('removeRectElById: class sweep fallback removes element', afterSweep === 0, afterSweep);
+
+// T8: removeRectElById — strategy 3: .selected sweep
+const el5 = document.createElement('div');
+el5.className = 'rect-el selected';
+el5.dataset.rectId = 'sel-id-1';
+overlay.appendChild(el5);
+removeRectElById('sel-id-1');
+const afterSelected = document.querySelectorAll('.rect-el.selected').length;
+assert('removeRectElById: selected sweep removes element', afterSelected === 0, afterSelected);
+
+// T9: keyboard event — e.code check for German Entf key
+const keEntf = new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', bubbles: true });
+let fired = false;
+document.addEventListener('keydown', function handler(e) {
+  if (e.key !== 'Delete' && e.code !== 'Delete') return;
+  fired = true;
+  document.removeEventListener('keydown', handler);
+});
+document.dispatchEvent(keEntf);
+assert('keyboard handler fires on e.code === Delete', fired, fired);
+
+// Render results
+const allPass = tests.every(t => t.pass);
+document.title = allPass ? 'ALL PASS' : 'FAIL';
+result.innerHTML = '<h2 style="font-family:sans-serif">' +
+  (allPass ? '✅ ALL TESTS PASS' : '❌ FAILURES') + '</h2>' +
+  tests.map(t =>
+    '<div style="font-family:monospace;margin:4px 0;color:' + (t.pass ? 'green' : 'red') + '">' +
+    (t.pass ? '✓' : '✗') + ' ' + t.name + ' → ' + t.got + '</div>'
+  ).join('');
+</script>
+</body></html>

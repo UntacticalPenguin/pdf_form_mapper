@@ -1,6 +1,7 @@
 // panel.js — properties panel: edit label, type; delete rect
 
 import { getRect, updateRect, deleteRect, getSelectedId } from './rect-manager.js';
+import { removeRectElById } from './interactions.js';
 
 export function initPanel() {
   const panel      = document.getElementById('properties-panel');
@@ -22,7 +23,7 @@ export function initPanel() {
     const id = getSelectedId();
     if (!id) return;
     deleteRect(id);
-    document.querySelectorAll(`[data-rect-id="${id}"]`).forEach(el => el.remove());
+    removeRectElById(id);
     _showFields(false);
     document.dispatchEvent(new CustomEvent('rect-deselected'));
     document.dispatchEvent(new CustomEvent('rect-list-changed'));
@@ -66,7 +67,7 @@ export function initPanel() {
   // Keyboard shortcut: Delete key (also "Entf" on German keyboards — same event)
   // Guard: do not fire while the user is typing in an input or select.
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Delete') return;
+    if (e.key !== 'Delete' && e.code !== 'Delete') return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     e.preventDefault();

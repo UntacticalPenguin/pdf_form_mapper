@@ -11,6 +11,10 @@ let dragState = null;
 //   move:   { type:'move',   rectId, overlay, startMX, startMY, origX, origY }
 //   resize: { type:'resize', rectId, overlay, handle, startMX, startMY, origRect }
 
+// Direct element registry — keyed by rect id.
+// Avoids CSS-selector parsing entirely when deleting.
+const _registry = new Map();
+
 export function initInteractions(renderer) {
   // "Add Field" button toggles draw mode
   document.getElementById('btn-add-rect').addEventListener('click', () => {
@@ -24,6 +28,7 @@ export function initInteractions(renderer) {
   // Reset draw mode and re-attach overlay listeners after each PDF load
   document.addEventListener('pdf-loaded', () => {
     drawMode = false;
+    _registry.clear();
     document.getElementById('btn-add-rect').classList.remove('active');
     document.getElementById('btn-add-rect').textContent = '+ Add Field';
     _attachOverlayListeners();
@@ -160,7 +165,10 @@ function _onMouseUp(e) {
 
 /** Build and insert a rect DOM element. Exported for use by panel and exporter. */
 export function renderRectEl(rect, overlay) {
-  // Remove stale element if re-rendering
+  // Remove any existing element for this rect (by direct reference first, then DOM sweep)
+  const existing = _registry.get(rect.id);
+  if (existing) existing.remove();
+  // Also remove any stale attribute match in this overlay
   overlay.querySelector(`[data-rect-id="${rect.id}"]`)?.remove();
 
   // Use local (pre-transform) dimensions — style.left/top are in local coordinate space.
@@ -210,12 +218,35 @@ export function renderRectEl(rect, overlay) {
     }
   });
 
+  _registry.set(rect.id, el);
   overlay.appendChild(el);
   return el;
 }
 
+/**
+ * Remove a rect's DOM element by id.
+ * Uses direct registry reference first, then multiple DOM fallbacks.
+ * Exported for use by panel.js.
+ */
+export function removeRectElById(id) {
+  // 1. Direct reference from registry (most reliable)
+  const tracked = _registry.get(id);
+  if (tracked) {
+    tracked.remove();
+    _registry.delete(id);
+  }
+  // 2. Sweep all .rect-el elements — avoids CSS selector parsing, catches any stragglers
+  document.querySelectorAll('.rect-el').forEach(el => {
+    if (el.dataset.rectId === id) el.remove();
+  });
+  // 3. Belt-and-suspenders: remove any currently-selected rect element
+  //    (a rect being deleted is always selected, so .selected is a reliable signal)
+  document.querySelectorAll('.rect-el.selected').forEach(el => el.remove());
+}
+
 /** Re-render all rects from allRects state. Used after JSON load. */
 export function reRenderAllRects(allRects) {
+  _registry.clear();
   document.querySelectorAll('.rect-el').forEach(el => el.remove());
   for (const [pageNum, pageRects] of Object.entries(allRects)) {
     const overlay = document.querySelector(`.page-overlay[data-page="${pageNum}"]`);
@@ -227,7 +258,6 @@ export function reRenderAllRects(allRects) {
 
 /**
  * Programmatically select a rect by id — used by the sidebar.
- * Exported so sidebar.js can call it without coupling to dragState.
  */
 export function selectRectById(id, overlay) {
   _selectRect(id, overlay);
@@ -251,7 +281,6 @@ function _deselectAll() {
 }
 
 // Returns mouse position in the overlay's LOCAL coordinate space (before CSS transform).
-// style.left/top are in local space, so this must be used for draw/render operations.
 function _relCoordsLocal(overlay, clientX, clientY) {
   const bbox   = overlay.getBoundingClientRect();
   const scaleX = bbox.width  / overlay.offsetWidth;
@@ -263,7 +292,7 @@ function _relCoordsLocal(overlay, clientX, clientY) {
 }
 
 // Returns overlay size in VIEWPORT (post-transform) space.
-// Used only for move/resize delta→fraction conversion: viewport_delta / viewport_W = correct fraction.
+// Used for move/resize delta→fraction conversion only.
 function _overlaySize(overlay) {
   const r = overlay.getBoundingClientRect();
   return { W: r.width, H: r.height };
