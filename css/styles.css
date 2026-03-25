@@ -226,3 +226,20 @@ body {
   color: var(--text-muted);
 }
 #info-section h4 { margin-bottom: 6px; color: var(--text-primary); }
+
+/* Active/toggle state for toolbar buttons */
+.btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* PDF field overlay toggle button — red tint when active */
+#btn-toggle-fields.active {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+#btn-toggle-fields.active:hover:not(:disabled) {
+  background: #e74c3c;
+  color: #fff;
+}

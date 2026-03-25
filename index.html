@@ -31,7 +31,7 @@
       <!-- Toggle PDF field borders -->
       <button id="btn-toggle-fields" class="btn" disabled>
         Toggle PDF Fields
-        <span class="tooltip-anchor">?<span class="tooltip-text">PLACEHOLDER: explain what this does</span></span>
+        <span class="tooltip-anchor">?<span class="tooltip-text">Shows the actual form field boundaries embedded in the PDF as red outlines. Use this to verify your drawn rectangles align with the real fields.</span></span>
       </button>
       <!-- Color picker -->
       <label class="color-label">
@@ -51,7 +51,7 @@
     <div id="pdf-viewer">
       <div id="drop-hint">
         <p>Upload a PDF to get started</p>
-        <p class="sub">PLACEHOLDER: add usage instructions here</p>
+        <p class="sub">Upload a PDF, draw rectangles over form fields, label them, then download JSON or CSV.</p>
       </div>
       <div id="pages-container"></div>
     </div>
@@ -61,12 +61,12 @@
       <h3>Field Properties</h3>
       <label>
         Label (HTTP POST key)
-        <span class="tooltip-anchor">?<span class="tooltip-text">PLACEHOLDER: label tooltip</span></span>
+        <span class="tooltip-anchor">?<span class="tooltip-text">Enter the HTTP POST key name (e.g. "first_name") that this PDF field corresponds to. This is the key from the incoming POST request.</span></span>
         <input type="text" id="prop-label" placeholder="e.g. first_name">
       </label>
       <label>
         Type
-        <span class="tooltip-anchor">?<span class="tooltip-text">PLACEHOLDER: type tooltip</span></span>
+        <span class="tooltip-anchor">?<span class="tooltip-text">text: a regular text input field | checkbox: a single on/off checkbox | radio: one of a group of radio buttons</span></span>
         <select id="prop-type">
           <option value="">— select type —</option>
           <option value="text">text</option>
@@ -82,7 +82,8 @@
   <!-- INFO SECTION -->
   <footer id="info-section">
     <h4>About</h4>
-    <p>PLACEHOLDER: add general information, contact details, etc.</p>
+    <p>This tool creates position-based JSON mappings for PDF forms — no server involved, PDFs never leave your browser. Upload a PDF, draw rectangles over the fields, assign your HTTP POST key names, and download the mapping.</p>
+    <p style="margin-top: 8px;">Questions or issues? Contact: <a href="mailto:PLACEHOLDER@example.com" style="color: var(--accent);">PLACEHOLDER</a></p>
   </footer>
 
   <script type="module" src="js/main.js"></script>
