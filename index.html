@@ -58,6 +58,12 @@
 
     <!-- PDF VIEWER -->
     <div id="pdf-viewer">
+      <!-- Zoom controls — sticky at top of scroll area, shown after PDF loads -->
+      <div id="zoom-controls">
+        <button class="zoom-btn" id="btn-zoom-out" title="Zoom out">−</button>
+        <span id="zoom-level" title="Click to reset zoom">100%</span>
+        <button class="zoom-btn" id="btn-zoom-in" title="Zoom in">+</button>
+      </div>
       <div id="drop-hint">
         <p>Upload a PDF to get started</p>
         <p class="sub">Upload a PDF, draw rectangles over form fields, label them, then download JSON or CSV.</p>

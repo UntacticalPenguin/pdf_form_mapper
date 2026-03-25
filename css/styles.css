@@ -184,15 +184,20 @@ body {
   position: absolute;
   border: 4px solid var(--accent);
   border-radius: 2px;
-  cursor: move;
+  cursor: pointer;          /* pointer = selectable; becomes move only when selected */
   pointer-events: all;
   box-sizing: border-box;
 }
-.rect-el.selected { outline: 2px solid white; outline-offset: 2px; }
+.rect-el.selected {
+  outline: 2px solid white;
+  outline-offset: 2px;
+  cursor: move;             /* move cursor only on selected rect */
+}
 
-/* Corner resize handles — 14px (doubled from 8px) */
+/* Corner resize handles — 14px, hidden until rect is selected */
 .resize-handle {
   position: absolute;
+  display: none;            /* hidden until selected */
   width: 14px; height: 14px;
   background: white;
   border: 2px solid var(--accent);
@@ -200,10 +205,49 @@ body {
   pointer-events: all;
   z-index: 10;
 }
+.rect-el.selected .resize-handle { display: block; }
 .resize-handle.tl { top: -7px; left: -7px; cursor: nw-resize; }
 .resize-handle.tr { top: -7px; right: -7px; cursor: ne-resize; }
 .resize-handle.bl { bottom: -7px; left: -7px; cursor: sw-resize; }
 .resize-handle.br { bottom: -7px; right: -7px; cursor: se-resize; }
+
+/* ZOOM CONTROLS — sticky bar at top of pdf-viewer scroll area */
+#zoom-controls {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: none;            /* shown by JS after PDF loads */
+  align-items: center;
+  gap: 0;
+  align-self: center;
+  margin-bottom: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  user-select: none;
+}
+#zoom-controls.visible { display: flex; }
+.zoom-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 10px;
+  transition: background 0.12s;
+}
+.zoom-btn:hover { background: var(--accent); color: #fff; }
+#zoom-level {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 44px;
+  text-align: center;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+#zoom-level:hover { color: var(--text-primary); }
 
 /* PDF FIELD OVERLAY (red borders, toggleable) */
 .pdf-field-el {

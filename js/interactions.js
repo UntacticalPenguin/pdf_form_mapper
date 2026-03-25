@@ -1,7 +1,7 @@
 // interactions.js — mouse interactions: draw new rect, move, corner-resize, select
 
 import {
-  addRect, updateRect, getRect, setSelectedId,
+  addRect, updateRect, getRect, setSelectedId, getSelectedId,
 } from './rect-manager.js';
 
 let drawMode = false;
@@ -166,6 +166,8 @@ export function renderRectEl(rect, overlay) {
   const { W, H } = _overlaySize(overlay);
   const el = document.createElement('div');
   el.className = 'rect-el';
+  // Preserve selected state when re-rendering during drag
+  if (rect.id === getSelectedId()) el.classList.add('selected');
   el.dataset.rectId = rect.id;
   el.style.left   = `${rect.x_pct * W}px`;
   el.style.top    = `${rect.y_pct * H}px`;
@@ -189,17 +191,21 @@ export function renderRectEl(rect, overlay) {
     el.appendChild(h);
   }
 
-  // Click to select + start move
+  // First click → select only. Second click (already selected) → start move drag.
   el.addEventListener('mousedown', (e) => {
     if (e.target.classList.contains('resize-handle')) return;
     e.stopPropagation();
+    const alreadySelected = rect.id === getSelectedId();
     _selectRect(rect.id, overlay);
-    const r = getRect(rect.id);
-    dragState = {
-      type: 'move', rectId: rect.id, overlay,
-      startMX: e.clientX, startMY: e.clientY,
-      origX: r.x_pct, origY: r.y_pct,
-    };
+    if (alreadySelected) {
+      const r = getRect(rect.id);
+      if (!r) return;
+      dragState = {
+        type: 'move', rectId: rect.id, overlay,
+        startMX: e.clientX, startMY: e.clientY,
+        origX: r.x_pct, origY: r.y_pct,
+      };
+    }
   });
 
   overlay.appendChild(el);

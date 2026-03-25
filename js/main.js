@@ -59,33 +59,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // ── PDF-AREA ZOOM (wheel inside #pdf-viewer only) ─────────────────────────
-  const pdfViewer    = document.getElementById('pdf-viewer');
+  // ── PDF-AREA ZOOM ──────────────────────────────────────────────────────────
+  const pdfViewer      = document.getElementById('pdf-viewer');
   const pagesContainer = document.getElementById('pages-container');
   const zoomContainer  = document.getElementById('zoom-container');
+  const zoomControls   = document.getElementById('zoom-controls');
+  const zoomLevelEl    = document.getElementById('zoom-level');
   let currentZoom = 1.0;
   const MIN_ZOOM  = 0.25;
   const MAX_ZOOM  = 4.0;
   const ZOOM_STEP = 0.1;
 
+  // Show zoom controls once a PDF is loaded
+  document.addEventListener('pdf-loaded', () => {
+    zoomControls.classList.add('visible');
+  });
+
+  // Wheel inside pdf-viewer zooms PDF content; wheel outside = normal browser behaviour
   pdfViewer.addEventListener('wheel', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const direction = e.deltaY < 0 ? 1 : -1;
-    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + direction * ZOOM_STEP));
+    _changeZoom(e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+  }, { passive: false });
+
+  // + / − buttons
+  document.getElementById('btn-zoom-in').addEventListener('click',  () => _changeZoom(ZOOM_STEP));
+  document.getElementById('btn-zoom-out').addEventListener('click', () => _changeZoom(-ZOOM_STEP));
+
+  // Click on the percentage label → reset to 100%
+  zoomLevelEl.addEventListener('click', _resetZoom);
+
+  function _changeZoom(delta) {
+    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
     if (Math.abs(newZoom - currentZoom) < 0.001) return;
     currentZoom = newZoom;
     _applyZoom();
-  }, { passive: false });
+  }
 
   function _applyZoom() {
     pagesContainer.style.transform = currentZoom === 1 ? '' : `scale(${currentZoom})`;
-    // offsetWidth/Height are layout (pre-transform) dimensions — multiply by zoom
-    // to give the scroll container the correct scrollable area.
+    // offsetWidth/Height are layout (pre-transform) dims — scale them so the
+    // scroll container knows the true visual size of the content.
     const natW = pagesContainer.offsetWidth;
     const natH = pagesContainer.offsetHeight;
     zoomContainer.style.width  = currentZoom === 1 ? '' : `${natW * currentZoom}px`;
     zoomContainer.style.height = currentZoom === 1 ? '' : `${natH * currentZoom}px`;
+    zoomLevelEl.textContent = `${Math.round(currentZoom * 100)}%`;
   }
 
   function _resetZoom() {
@@ -93,5 +112,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     pagesContainer.style.transform = '';
     zoomContainer.style.width  = '';
     zoomContainer.style.height = '';
+    zoomLevelEl.textContent = '100%';
   }
 });
