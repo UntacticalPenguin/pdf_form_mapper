@@ -20,12 +20,21 @@ export function initInteractions(renderer) {
     btn.textContent = drawMode ? '✕ Cancel' : '+ Add Field';
   });
 
-  // Attach overlay listeners after PDF loads
-  document.addEventListener('pdf-loaded', _attachOverlayListeners);
+  // Reset draw mode and re-attach overlay listeners after each PDF load
+  document.addEventListener('pdf-loaded', () => {
+    drawMode = false;
+    document.getElementById('btn-add-rect').classList.remove('active');
+    document.getElementById('btn-add-rect').textContent = '+ Add Field';
+    _attachOverlayListeners();
+  });
 
   // Global move/up handlers (must be on document to handle fast mouse moves)
   document.addEventListener('mousemove', _onMouseMove);
   document.addEventListener('mouseup', _onMouseUp);
+
+  // Cancel any in-progress drag if the window loses focus (e.g. Alt+Tab)
+  window.addEventListener('blur', _cancelDrag);
+  document.addEventListener('pointercancel', _cancelDrag);
 }
 
 function _attachOverlayListeners() {
@@ -38,7 +47,7 @@ function _attachOverlayListeners() {
 
 function _onOverlayMouseDown(e) {
   const overlay = e.currentTarget;
-  const pageNum = parseInt(overlay.dataset.page);
+  const pageNum = parseInt(overlay.dataset.page, 10);
 
   if (drawMode) {
     e.stopPropagation();
@@ -232,5 +241,13 @@ function _relCoords(overlay, clientX, clientY) {
 }
 
 function _overlaySize(overlay) {
-  return { W: overlay.parentElement.offsetWidth, H: overlay.parentElement.offsetHeight };
+  // Use getBoundingClientRect for consistency with _relCoords (same coordinate space)
+  const r = overlay.getBoundingClientRect();
+  return { W: r.width, H: r.height };
+}
+
+function _cancelDrag() {
+  if (!dragState) return;
+  if (dragState.type === 'draw') dragState.previewEl?.remove();
+  dragState = null;
 }

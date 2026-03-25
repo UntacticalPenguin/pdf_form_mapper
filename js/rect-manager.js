@@ -8,7 +8,7 @@ let rects = {};        // { [pageNum]: RectData[] }
 let selectedId = null;
 
 function _uuid() {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 export function initRectManager() {
@@ -44,7 +44,11 @@ export function updateRect(id, changes) {
 export function deleteRect(id) {
   for (const [pageNum, page] of Object.entries(rects)) {
     const idx = page.findIndex(r => r.id === id);
-    if (idx !== -1) { page.splice(idx, 1); return true; }
+    if (idx !== -1) {
+      page.splice(idx, 1);
+      if (selectedId === id) selectedId = null;
+      return true;
+    }
   }
   return false;
 }
