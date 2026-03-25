@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; worker-src blob:; img-src 'self' blob: data:; connect-src 'none';">
-  <!-- NOTE: 'unsafe-inline' for style-src is required because theming uses
-       document.documentElement.style.setProperty() which is treated as inline style. -->
   <title>PDF Form Mapper</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -15,33 +13,25 @@
   <header id="toolbar">
     <span class="app-title">PDF Form Mapper</span>
     <div class="toolbar-controls">
-      <!-- Upload PDF -->
       <label class="btn" for="pdf-upload">
         Upload PDF
         <input type="file" id="pdf-upload" accept=".pdf" hidden>
       </label>
-      <!-- Load JSON -->
       <label class="btn" for="json-upload">
         Load JSON
         <input type="file" id="json-upload" accept=".json" hidden>
       </label>
-      <!-- Add Rectangle -->
       <button id="btn-add-rect" class="btn" disabled>+ Add Field</button>
-      <!-- Toggle PDF field borders -->
       <button id="btn-toggle-fields" class="btn" disabled>
         Toggle PDF Fields
         <span class="tooltip-anchor" data-tooltip="Shows the actual form field boundaries embedded in the PDF as red outlines. Use this to verify your drawn rectangles align with the real fields.">?</span>
       </button>
-      <!-- Color picker (rect border color only) -->
       <label class="color-label">
         Rect Color
         <input type="color" id="rect-color" value="#4a9eff">
       </label>
-      <!-- Download JSON -->
       <button id="btn-dl-json" class="btn btn-primary" disabled>Download JSON</button>
-      <!-- Download CSV -->
       <button id="btn-dl-csv" class="btn btn-primary" disabled>Download CSV</button>
-      <!-- Light/Dark Mode Toggle -->
       <button id="btn-theme" class="btn">Light Mode</button>
     </div>
   </header>
@@ -56,21 +46,25 @@
       </div>
     </aside>
 
-    <!-- PDF VIEWER -->
-    <div id="pdf-viewer">
-      <!-- Zoom controls — sticky at top of scroll area, shown after PDF loads -->
+    <!-- PDF AREA: positioning context for zoom controls overlay -->
+    <div id="pdf-area">
+      <!-- Zoom controls: absolute overlay, never scrolls with content -->
       <div id="zoom-controls">
         <button class="zoom-btn" id="btn-zoom-out" title="Zoom out">−</button>
         <span id="zoom-level" title="Click to reset zoom">100%</span>
         <button class="zoom-btn" id="btn-zoom-in" title="Zoom in">+</button>
       </div>
-      <div id="drop-hint">
-        <p>Upload a PDF to get started</p>
-        <p class="sub">Upload a PDF, draw rectangles over form fields, label them, then download JSON or CSV.</p>
-      </div>
-      <!-- zoom-container is sized by JS to enable proper scroll with transform:scale -->
-      <div id="zoom-container">
-        <div id="pages-container"></div>
+
+      <!-- PDF VIEWER: the actual scrollable region -->
+      <div id="pdf-viewer">
+        <div id="drop-hint">
+          <p>Upload a PDF to get started</p>
+          <p class="sub">Upload a PDF, draw rectangles over form fields, label them, then download JSON or CSV.</p>
+        </div>
+        <!-- zoom-container sized by JS to enable proper scroll with transform:scale -->
+        <div id="zoom-container">
+          <div id="pages-container"></div>
+        </div>
       </div>
     </div>
 
@@ -94,15 +88,14 @@
       </label>
       <button id="prop-delete" class="btn btn-danger">Delete Field</button>
       <p id="prop-no-selection" class="muted">Click a rectangle to edit it.</p>
+
+      <!-- About info — pushed to bottom of panel -->
+      <div id="about-corner">
+        <p>Position-based JSON mappings for PDF forms. No server — PDFs never leave your browser.</p>
+        <p>Questions? <a id="about-link" href="mailto:PLACEHOLDER@example.com">Contact</a></p>
+      </div>
     </aside>
   </main>
-
-  <!-- INFO SECTION -->
-  <footer id="info-section">
-    <h4>About</h4>
-    <p>Position-based JSON mappings for PDF forms — no server involved, PDFs never leave your browser. Upload a PDF, draw rectangles, assign POST key names, download the mapping.</p>
-    <p style="margin-top: 4px;">Questions or issues? Contact: <a href="mailto:PLACEHOLDER@example.com" style="color: var(--accent);">PLACEHOLDER</a></p>
-  </footer>
 
   <!-- Global tooltip: position:fixed so it escapes any overflow clipping -->
   <div id="global-tooltip" role="tooltip" aria-hidden="true"></div>

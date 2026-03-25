@@ -132,7 +132,56 @@ body {
   text-align: center;
 }
 
-/* PDF VIEWER */
+/* PDF AREA — positioning context for the zoom controls overlay */
+#pdf-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;           /* clips nothing visually; just establishes a block */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ZOOM CONTROLS — absolute overlay, centred at top, never scrolls */
+#zoom-controls {
+  display: none;              /* shown via .visible after PDF loads */
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  align-items: center;
+  gap: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  user-select: none;
+  /* subtle shadow so it's readable over white PDF pages */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+#zoom-controls.visible { display: flex; }
+.zoom-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 10px;
+  transition: background 0.12s;
+}
+.zoom-btn:hover { background: var(--accent); color: #fff; }
+#zoom-level {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 44px;
+  text-align: center;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+#zoom-level:hover { color: var(--text-primary); }
+
+/* PDF VIEWER — scrollable region inside pdf-area */
 #pdf-viewer {
   flex: 1;
   overflow: auto;
@@ -328,15 +377,19 @@ body {
 }
 #global-tooltip.visible { display: block; }
 
-/* INFO FOOTER — half as tall */
-#info-section {
-  background: var(--bg-secondary);
+/* ABOUT CORNER — sits at bottom of right panel */
+#about-corner {
+  margin-top: auto;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
-  padding: 8px 24px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
+  line-height: 1.55;
+  word-break: break-word;
 }
-#info-section h4 { margin-bottom: 3px; color: var(--text-primary); font-size: 12px; }
+#about-corner p + p { margin-top: 4px; }
+#about-link { color: var(--accent); text-decoration: none; }
+#about-link:hover { text-decoration: underline; }
 
 /* Active/toggle state for toolbar buttons */
 .btn.active {
