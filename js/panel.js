@@ -1,7 +1,7 @@
 // panel.js — properties panel: edit label, type; delete rect
 
 import { getRect, updateRect, deleteRect, getSelectedId } from './rect-manager.js';
-import { removeRectElById, renderRectEl } from './interactions.js';
+import { removeRectElById } from './interactions.js';
 
 export function initPanel() {
   const panel      = document.getElementById('properties-panel');
@@ -99,7 +99,11 @@ export function initPanel() {
     const newX = Math.max(0, Math.min(1 - rect.w_pct, rect.x_pct + dx / W));
     const newY = Math.max(0, Math.min(1 - rect.h_pct, rect.y_pct + dy / H));
     updateRect(id, { x_pct: newX, y_pct: newY });
-    renderRectEl(getRect(id), overlay);
+    // Update position in-place — do NOT remove/re-append the element.
+    // Removing a DOM node from a scroll container triggers Chrome's scroll-anchoring
+    // algorithm, which compensates by jumping the viewport unexpectedly.
+    el.style.left = `${newX * W}px`;
+    el.style.top  = `${newY * H}px`;
   });
 
   // Init: hide fields (panel itself remains hidden until PDF loads)
