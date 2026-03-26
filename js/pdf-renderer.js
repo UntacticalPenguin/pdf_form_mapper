@@ -8,7 +8,7 @@ const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.w
 let pdfjsLib = null;
 let pdfDoc = null;          // PDFDocumentProxy — kept in memory only, never persisted
 let pageAnnotations = {};   // { pageNum: [annotation, ...] }
-let renderScale = 1.5;      // css pixels per pdf point
+let renderScale = 1;      // css pixels per pdf point
 let fieldOverlayVisible = false;
 
 /**

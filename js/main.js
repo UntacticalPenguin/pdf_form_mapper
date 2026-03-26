@@ -78,9 +78,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Wheel anywhere inside #pdf-area (including over zoom controls) zooms PDF content.
   // Wheel outside the pdf-area reaches the browser and works as normal page zoom.
   pdfArea.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    _changeZoom(e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+    if (e.ctrlKey){
+      e.preventDefault();
+      e.stopPropagation();
+      _changeZoom(e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+    }
+    
   }, { passive: false });
 
   // + / − buttons
