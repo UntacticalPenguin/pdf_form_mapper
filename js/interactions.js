@@ -151,6 +151,8 @@ function _onMouseUp(e) {
       renderRectEl(rect, overlay);
       _selectRect(rect.id, overlay);
       document.dispatchEvent(new CustomEvent('rect-list-changed'));
+      // Move focus to the label field so the user can start typing immediately
+      setTimeout(() => document.getElementById('prop-label')?.focus(), 0);
     }
 
     // Exit draw mode

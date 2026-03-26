@@ -73,4 +73,10 @@ function _onSidebarItemClick(id, pageNum) {
   const overlay = document.querySelector(`.page-overlay[data-page="${pageNum}"]`);
   if (!overlay) return;
   if (_selectRectCallback) _selectRectCallback(id, overlay);
+
+  // Scroll the PDF viewer so the rect is centred in view.
+  // scrollIntoView stops at #pdf-viewer (the nearest overflow:auto ancestor);
+  // outer containers are overflow:hidden so the page itself never scrolls.
+  const rectEl = document.querySelector(`[data-rect-id="${id}"]`);
+  rectEl?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
 }

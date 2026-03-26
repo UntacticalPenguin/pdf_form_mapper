@@ -90,7 +90,7 @@ body {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;         /* header is fixed; only the list scrolls */
   flex-shrink: 0;
 }
 #fields-sidebar.hidden { display: none; }
@@ -103,7 +103,13 @@ body {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-#sidebar-list { display: flex; flex-direction: column; }
+#sidebar-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;            /* allows flex child to shrink below content height */
+  overflow-y: auto;         /* shows scrollbar only when items overflow */
+}
 .sidebar-item {
   padding: 7px 12px;
   font-size: 12px;
@@ -243,11 +249,11 @@ body {
   cursor: move;             /* move cursor only on selected rect */
 }
 
-/* Corner resize handles — 14px, hidden until rect is selected */
+/* Corner resize handles — 10.5px (25% smaller than original 14px) */
 .resize-handle {
   position: absolute;
   display: none;            /* hidden until selected */
-  width: 14px; height: 14px;
+  width: 10.5px; height: 10.5px;
   background: white;
   border: 2px solid var(--accent);
   border-radius: 50%;
@@ -255,10 +261,10 @@ body {
   z-index: 10;
 }
 .rect-el.selected .resize-handle { display: block; }
-.resize-handle.tl { top: -7px; left: -7px; cursor: nw-resize; }
-.resize-handle.tr { top: -7px; right: -7px; cursor: ne-resize; }
-.resize-handle.bl { bottom: -7px; left: -7px; cursor: sw-resize; }
-.resize-handle.br { bottom: -7px; right: -7px; cursor: se-resize; }
+.resize-handle.tl { top: -5.25px; left: -5.25px; cursor: nw-resize; }
+.resize-handle.tr { top: -5.25px; right: -5.25px; cursor: ne-resize; }
+.resize-handle.bl { bottom: -5.25px; left: -5.25px; cursor: sw-resize; }
+.resize-handle.br { bottom: -5.25px; right: -5.25px; cursor: se-resize; }
 
 /* ZOOM CONTROLS — sticky bar at top of pdf-viewer scroll area */
 #zoom-controls {
