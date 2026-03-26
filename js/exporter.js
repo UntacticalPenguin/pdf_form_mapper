@@ -5,14 +5,14 @@ import { reRenderAllRects } from './interactions.js';
 import { matchRectsToAnnotations } from './coord-utils.js';
 
 export function initExporter(renderer) {
-  document.getElementById('btn-dl-json').addEventListener('click', () => _downloadJson());
+  document.getElementById('btn-dl-json').addEventListener('click', () => _downloadJson(renderer));
   document.getElementById('btn-dl-csv').addEventListener('click', () => _downloadCsv(renderer));
 
   const jsonInput = document.getElementById('json-upload');
   jsonInput.addEventListener('change', (e) => _loadJson(e, renderer));
 }
 
-function _downloadJson() {
+function _downloadJson(renderer) {
   const errors = validate();
   if (errors.length > 0) {
     alert('Cannot export JSON — fix these issues first:\n\n' + errors.join('\n'));
@@ -41,7 +41,7 @@ function _downloadJson() {
   pages.sort((a, b) => a.page - b.page);
 
   const json = JSON.stringify({ version: '1.0', pages }, null, 2);
-  _triggerDownload(json, 'mapping.json', 'application/json');
+  _triggerDownload(json, `${renderer.getPdfBaseName()}_mapping.json`, 'application/json');
   // NOTE: PDF stays in viewer — nothing is reset here
 }
 
@@ -84,7 +84,7 @@ async function _downloadCsv(renderer) {
   const csvContent = rows
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\r\n');
-  _triggerDownload('\uFEFF' + csvContent, 'mapping.csv', 'text/csv;charset=utf-8');
+  _triggerDownload('\uFEFF' + csvContent, `${renderer.getPdfBaseName()}_mapping.csv`, 'text/csv;charset=utf-8');
 }
 
 function _loadJson(e, renderer) {

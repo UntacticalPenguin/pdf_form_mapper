@@ -8,8 +8,9 @@ const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.w
 let pdfjsLib = null;
 let pdfDoc = null;          // PDFDocumentProxy — kept in memory only, never persisted
 let pageAnnotations = {};   // { pageNum: [annotation, ...] }
-let renderScale = 1;      // css pixels per pdf point
+let renderScale = 1;        // css pixels per pdf point
 let fieldOverlayVisible = false;
+let pdfBaseName = 'mapping'; // filename stem of the loaded PDF (no extension)
 
 /**
  * Loads PDF.js from CDN and wires up the file input and toggle button.
@@ -28,6 +29,7 @@ export async function initRenderer() {
     getPageAnnotations: () => pageAnnotations,
     getRenderScale: () => renderScale,
     getPageCount: () => pdfDoc ? pdfDoc.numPages : 0,
+    getPdfBaseName: () => pdfBaseName,
     revokePdf,
   };
 }
@@ -45,6 +47,9 @@ async function _handleFileSelect(e) {
     e.target.value = '';
     return;
   }
+
+  // Strip .pdf extension; replace characters unsafe in filenames with underscores
+  pdfBaseName = file.name.replace(/\.pdf$/i, '').replace(/[\\/:*?"<>|]/g, '_') || 'mapping';
 
   revokePdf();
 
