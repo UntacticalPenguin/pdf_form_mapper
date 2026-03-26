@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; worker-src blob:; img-src 'self' blob: data:; connect-src 'none';">
-  <title>PDF Form Mapper</title>
+  <title>PDF Formular Mapper</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <!-- TOOLBAR -->
   <header id="toolbar">
-    <span class="app-title">PDF Form Mapper</span>
+    <span class="app-title">PDF Formular Mapper</span>
     <div class="toolbar-controls">
       <label class="btn" for="pdf-upload">
-        Upload PDF
+        PDF hochladen
         <input type="file" id="pdf-upload" accept=".pdf" hidden>
       </label>
       <label class="btn" for="json-upload">
-        Load JSON
+        JSON laden
         <input type="file" id="json-upload" accept=".json" hidden>
       </label>
       <button id="btn-add-rect" class="btn" disabled>+ Add Field</button>
       <button id="btn-toggle-fields" class="btn" disabled>
-        Toggle PDF Fields
+        Zeige PDF Fields
         <span class="tooltip-anchor" data-tooltip="Shows the actual form field boundaries embedded in the PDF as red outlines. Use this to verify your drawn rectangles align with the real fields.">?</span>
       </button>
       <label class="color-label">
-        Rect Color
+        Markierfarbe
         <input type="color" id="rect-color" value="#4a9eff">
       </label>
       <button id="btn-dl-json" class="btn btn-primary" disabled>Download JSON</button>
@@ -40,9 +40,9 @@
   <main id="main-layout">
     <!-- FIELDS SIDEBAR (left) -->
     <aside id="fields-sidebar" class="hidden">
-      <div id="fields-sidebar-header">Fields</div>
+      <div id="fields-sidebar-header">Felder</div>
       <div id="sidebar-list">
-        <p id="sidebar-empty">No fields yet.</p>
+        <p id="sidebar-empty">Noch keine Felder.</p>
       </div>
     </aside>
 
@@ -58,8 +58,8 @@
       <!-- PDF VIEWER: the actual scrollable region -->
       <div id="pdf-viewer">
         <div id="drop-hint">
-          <p>Upload a PDF to get started</p>
-          <p class="sub">Upload a PDF, draw rectangles over form fields, label them, then download JSON or CSV.</p>
+          <p>Lade eine PDF hoch.</p>
+          <p class="sub">Lade eine PDF hoch, zeichne Rechtecke über die Formularfelder, beschrifte sie und lade dann JSON oder CSV herunter.</p>
         </div>
         <!-- zoom-container sized by JS to enable proper scroll with transform:scale -->
         <div id="zoom-container">
@@ -70,29 +70,29 @@
 
     <!-- PROPERTIES PANEL -->
     <aside id="properties-panel" class="hidden">
-      <h3>Field Properties</h3>
+      <h3>Feld-Eigenschaften</h3>
       <label>
-        Label (HTTP POST key)
-        <span class="tooltip-anchor" data-tooltip="Enter the HTTP POST key name (e.g. &quot;first_name&quot;) that this PDF field corresponds to. This is the key from the incoming POST request.">?</span>
-        <input type="text" id="prop-label" placeholder="e.g. first_name">
+        Label
+        <span class="tooltip-anchor" data-tooltip="Gib den Labelnamen ein (z.B. &quot;first_name&quot;), der diesem PDF-Feld entspricht. Dies ist der Schlüssel aus der eingehenden POST-Anfrage.">?</span>
+        <input type="text" id="prop-label" placeholder="z.B. first_name">
       </label>
       <label>
         Type
-        <span class="tooltip-anchor" data-tooltip="text: a regular text input field | checkbox: a single on/off checkbox | radio: one of a group of radio buttons">?</span>
+        <span class="tooltip-anchor" data-tooltip="text: ein normales Texteingabefeld | checkbox: ein einzelnes An/Aus-Ankreuzkästchen | radio: eines aus einer Gruppe von Optionsfeldern">?</span>
         <select id="prop-type">
-          <option value="">— select type —</option>
+          <option value="">— Typ auswählen —</option>
           <option value="text">text</option>
           <option value="checkbox">checkbox</option>
           <option value="radio">radio</option>
         </select>
       </label>
-      <button id="prop-delete" class="btn btn-danger">Delete Field</button>
-      <p id="prop-no-selection" class="muted">Click a rectangle to edit it.</p>
+      <button id="prop-delete" class="btn btn-danger">Feld löschen</button>
+      <p id="prop-no-selection" class="muted">Klicke auf ein Rechteck, um es zu bearbeiten.</p>
 
       <!-- About info — pushed to bottom of panel -->
       <div id="about-corner">
-        <p>Position-based JSON mappings for PDF forms. No server — PDFs never leave your browser.</p>
-        <p>Questions? <a id="about-link" href="mailto:PLACEHOLDER@example.com">Contact</a></p>
+        <p>Positionsbasierte JSON-Zuordnungen für PDF-Formulare. Kein Server — PDFs verlassen nie deinen Browser.</p>
+        <p>Fragen? Kontakt: afonin@melag.de</a></p>
       </div>
     </aside>
   </main>
