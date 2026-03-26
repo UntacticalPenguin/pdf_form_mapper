@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── PDF-AREA ZOOM ──────────────────────────────────────────────────────────
   const pdfArea        = document.getElementById('pdf-area');
+  const pdfViewer      = document.getElementById('pdf-viewer');
   const pagesContainer = document.getElementById('pages-container');
   const zoomContainer  = document.getElementById('zoom-container');
   const zoomControls   = document.getElementById('zoom-controls');
@@ -75,15 +76,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     zoomControls.classList.add('visible');
   });
 
-  // Wheel anywhere inside #pdf-area (including over zoom controls) zooms PDF content.
-  // Wheel outside the pdf-area reaches the browser and works as normal page zoom.
+  // Ctrl+wheel → zoom; plain wheel → scroll #pdf-viewer.
+  // Always preventDefault so the browser doesn't interfere (native pinch-zoom, page scroll).
   pdfArea.addEventListener('wheel', (e) => {
-    if (e.ctrlKey){
-      e.preventDefault();
-      e.stopPropagation();
+    e.preventDefault();
+    if (e.ctrlKey) {
       _changeZoom(e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+    } else {
+      pdfViewer.scrollTop += e.deltaY;
+      pdfViewer.scrollLeft += e.deltaX;
     }
-    
   }, { passive: false });
 
   // + / − buttons
