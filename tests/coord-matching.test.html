@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Coord Matching Tests</title>
+  <style>
+    body { font-family: monospace; padding: 24px; background: #111; color: #eee; }
+    h1   { color: #7dd3fc; margin-bottom: 16px; }
+    .suite   { margin-bottom: 24px; }
+    .suite h2 { color: #a5f3fc; font-size: 14px; margin-bottom: 6px; }
+    .pass { color: #4ade80; }
+    .fail { color: #f87171; }
+    .summary { margin-top: 16px; font-size: 15px; font-weight: bold; }
+    pre { margin: 2px 0 2px 16px; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+<h1>coord-utils.js — coordinate matching tests</h1>
+<div id="output"></div>
+
+<script type="module">
+import {
+  annToCssRect,
+  rectToCssRect,
+  overlapArea,
+  matchRectsToAnnotations,
+} from '../js/coord-utils.js';
+
+// ── Tiny test runner ────────────────────────────────────────────────────────
+let passed = 0, failed = 0;
+const out = document.getElementById('output');
+
+function suite(name, fn) {
+  const el = document.createElement('div');
+  el.className = 'suite';
+  el.innerHTML = `<h2>${name}</h2>`;
+  out.appendChild(el);
+  fn(el);
+}
+
+function assert(el, desc, actual, expected) {
+  const ok = Math.abs(actual - expected) < 0.0001;
+  const li = document.createElement('div');
+  li.className = ok ? 'pass' : 'fail';
+  li.textContent = `${ok ? '✓' : '✗'} ${desc}`;
+  if (!ok) {
+    const pre = document.createElement('pre');
+    pre.textContent = `  expected ${expected}, got ${actual}`;
+    el.appendChild(li);
+    el.appendChild(pre);
+  } else {
+    el.appendChild(li);
+  }
+  ok ? passed++ : failed++;
+}
+
+function assertEq(el, desc, actual, expected) {
+  const ok = actual === expected;
+  const li = document.createElement('div');
+  li.className = ok ? 'pass' : 'fail';
+  li.textContent = `${ok ? '✓' : '✗'} ${desc}`;
+  if (!ok) {
+    const pre = document.createElement('pre');
+    pre.textContent = `  expected "${expected}", got "${actual}"`;
+    el.appendChild(li);
+    el.appendChild(pre);
+  } else {
+    el.appendChild(li);
+  }
+  ok ? passed++ : failed++;
+}
+
+// ── Test constants ──────────────────────────────────────────────────────────
+// Letter-sized PDF page: 612 × 792 PDF points.
+const PAGE_W = 612;   // renderScale = 1 → CSS layout pixels = PDF points
+const PAGE_H = 792;
+const SCALE  = 1;
+
+// ── Suite 1: annToCssRect — PDF → CSS coordinate flip ──────────────────────
+suite('annToCssRect: PDF → CSS layout pixel conversion', el => {
+  // Field near top of page in CSS: PDF y-values are near PAGE_H (top in PDF = high y)
+  // Field: [x1=50, y1=692, x2=200, y2=742]  (50 pts from left, 50–100 pts from top in CSS)
+  const box = annToCssRect([50, 692, 200, 742], PAGE_H, SCALE);
+  assert(el, 'left  = x1 * scale',           box.l, 50);
+  assert(el, 'top   = pageH - y2 (50 from top)', box.t, 50);
+  assert(el, 'right = x2 * scale',           box.r, 200);
+  assert(el, 'bottom= pageH - y1 (100 from top)', box.b, 100);
+
+  // Field near bottom of page in CSS: PDF y-values are low
+  // Field: [x1=100, y1=50, x2=300, y2=100]  → CSS top = 692, bottom = 742
+  const box2 = annToCssRect([100, 50, 300, 100], PAGE_H, SCALE);
+  assert(el, 'bottom-page field: left',  box2.l, 100);
+  assert(el, 'bottom-page field: top',   box2.t, 692);
+  assert(el, 'bottom-page field: right', box2.r, 300);
+  assert(el, 'bottom-page field: bottom',box2.b, 742);
+});
+
+// ── Suite 2: rectToCssRect — pct → layout pixels ───────────────────────────
+suite('rectToCssRect: percentage → CSS layout pixels', el => {
+  // Rect covering the top-left quarter
+  const box = rectToCssRect({ x_pct: 0, y_pct: 0, w_pct: 0.5, h_pct: 0.5 }, PAGE_W, PAGE_H);
+  assert(el, 'left   = 0',        box.l, 0);
+  assert(el, 'top    = 0',        box.t, 0);
+  assert(el, 'right  = PAGE_W/2', box.r, PAGE_W / 2);
+  assert(el, 'bottom = PAGE_H/2', box.b, PAGE_H / 2);
+
+  // Rect at exact field position: CSS (50, 50, 200, 100) on 612×792 page
+  const r = rectToCssRect({
+    x_pct: 50 / PAGE_W,
+    y_pct: 50 / PAGE_H,
+    w_pct: 150 / PAGE_W,
+    h_pct: 50 / PAGE_H,
+  }, PAGE_W, PAGE_H);
+  assert(el, 'left   = 50',  r.l, 50);
+  assert(el, 'top    = 50',  r.t, 50);
+  assert(el, 'right  = 200', r.r, 200);
+  assert(el, 'bottom = 100', r.b, 100);
+});
+
+// ── Suite 3: overlapArea ────────────────────────────────────────────────────
+suite('overlapArea: intersection area calculation', el => {
+  const a = { l: 0, t: 0, r: 100, b: 100 };
+  assert(el, 'full overlap: area = 10000',
+    overlapArea(a, a), 10000);
+
+  assert(el, 'no overlap (side by side): area = 0',
+    overlapArea(a, { l: 100, t: 0, r: 200, b: 100 }), 0);
+
+  assert(el, 'partial overlap (50%): area = 5000',
+    overlapArea(a, { l: 50, t: 0, r: 150, b: 100 }), 5000);
+
+  assert(el, 'completely disjoint: area = 0',
+    overlapArea(a, { l: 200, t: 200, r: 300, b: 300 }), 0);
+
+  assert(el, 'inner rect fully inside outer: area = inner rect area',
+    overlapArea(a, { l: 25, t: 25, r: 75, b: 75 }), 2500);
+});
+
+// ── Suite 4: matchRectsToAnnotations — the core matching ───────────────────
+suite('matchRectsToAnnotations: rect → annotation matching', el => {
+  // PDF field: [x1=50, y1=692, x2=200, y2=742] → CSS (50, 50, 200, 100)
+  const fieldA = { rect: [50, 692, 200, 742], fieldName: 'first_name' };
+  // PDF field: [x1=50, y1=592, x2=200, y2=642] → CSS (50, 150, 200, 200)
+  const fieldB = { rect: [50, 592, 200, 642], fieldName: 'last_name'  };
+  const annotations = [fieldA, fieldB];
+
+  // Rect drawn exactly over fieldA
+  const rectA = {
+    label: 'first_name_key',
+    x_pct: 50 / PAGE_W, y_pct: 50 / PAGE_H,
+    w_pct: 150 / PAGE_W, h_pct: 50 / PAGE_H,
+  };
+
+  // Rect drawn exactly over fieldB
+  const rectB = {
+    label: 'last_name_key',
+    x_pct: 50 / PAGE_W, y_pct: 150 / PAGE_H,
+    w_pct: 150 / PAGE_W, h_pct: 50 / PAGE_H,
+  };
+
+  // Rect drawn in empty space (no field nearby)
+  const rectNone = {
+    label: 'no_field_here',
+    x_pct: 400 / PAGE_W, y_pct: 400 / PAGE_H,
+    w_pct: 50 / PAGE_W, h_pct: 20 / PAGE_H,
+  };
+
+  const results = matchRectsToAnnotations(
+    [rectA, rectB, rectNone], annotations, PAGE_W, PAGE_H, SCALE
+  );
+
+  assertEq(el, 'rectA matches fieldA (first_name)',
+    results[0].ann?.fieldName, 'first_name');
+  assertEq(el, 'rectB matches fieldB (last_name)',
+    results[1].ann?.fieldName, 'last_name');
+  assertEq(el, 'rectNone has no match (ann = null)',
+    results[2].ann, null);
+});
+
+// ── Suite 5: Y-axis correctness (top vs bottom of page) ────────────────────
+suite('Y-axis: top-of-page vs bottom-of-page fields must not be swapped', el => {
+  // fieldTop: near top of CSS page (high PDF y: y1=700, y2=750) → CSS top=42, bottom=92
+  const fieldTop    = { rect: [100, 700, 300, 750], fieldName: 'top_field'    };
+  // fieldBottom: near bottom of CSS page (low PDF y: y1=50, y2=100) → CSS top=692, bottom=742
+  const fieldBottom = { rect: [100,  50, 300, 100], fieldName: 'bottom_field' };
+
+  // Rect drawn at top of CSS page (y_pct near 0)
+  const rectTop = {
+    label: 'rect_top',
+    x_pct: 100 / PAGE_W, y_pct: 42 / PAGE_H,
+    w_pct: 200 / PAGE_W, h_pct: 50 / PAGE_H,
+  };
+  // Rect drawn at bottom of CSS page (y_pct near 1)
+  const rectBottom = {
+    label: 'rect_bottom',
+    x_pct: 100 / PAGE_W, y_pct: 692 / PAGE_H,
+    w_pct: 200 / PAGE_W, h_pct: 50 / PAGE_H,
+  };
+
+  const results = matchRectsToAnnotations(
+    [rectTop, rectBottom], [fieldTop, fieldBottom], PAGE_W, PAGE_H, SCALE
+  );
+
+  assertEq(el, 'rect at CSS-top matches field with high PDF-y (top_field)',
+    results[0].ann?.fieldName, 'top_field');
+  assertEq(el, 'rect at CSS-bottom matches field with low PDF-y (bottom_field)',
+    results[1].ann?.fieldName, 'bottom_field');
+});
+
+// ── Suite 6: zoom-independence ──────────────────────────────────────────────
+// rect percentages are stored against offsetWidth (layout, zoom=1).
+// Passing the zoomed getBoundingClientRect size should produce wrong results;
+// passing offsetWidth should be correct regardless of zoom level.
+suite('Zoom independence: offsetWidth vs getBoundingClientRect', el => {
+  const field = { rect: [50, 692, 200, 742], fieldName: 'zoomed_field' };
+  const rect  = {
+    label: 'rect',
+    x_pct: 50 / PAGE_W, y_pct: 50 / PAGE_H,
+    w_pct: 150 / PAGE_W, h_pct: 50 / PAGE_H,
+  };
+
+  // Using offsetWidth (correct — zoom-independent): should match
+  const correctResult = matchRectsToAnnotations([rect], [field], PAGE_W, PAGE_H, SCALE);
+  assertEq(el, 'with offsetWidth (correct): matches field',
+    correctResult[0].ann?.fieldName, 'zoomed_field');
+
+  // Simulating getBoundingClientRect at zoom=2 (BUG: double dimensions)
+  // Rect and annotation coords are both stretched, but differently, causing mismatch
+  const zoomFactor = 2;
+  const buggyW = PAGE_W * zoomFactor;
+  const buggyH = PAGE_H * zoomFactor;
+  const buggyResult = matchRectsToAnnotations([rect], [field], buggyW, buggyH, SCALE);
+  const buggyMatch = buggyResult[0].ann?.fieldName ?? null;
+  // With zoom=2 passed as pageW/H: rect is scaled to [100,100,400,200] in doubled-px space
+  // but annotation is converted using pageH=1584, placing it at [50,(1584-742)=842, 200, (1584-692)=892]
+  // No overlap → correctly shows the bug
+  assertEq(el, 'with getBoundingClientRect at zoom=2 (BUG): no match (demonstrates the bug)',
+    buggyMatch, null);
+});
+
+// ── Summary ─────────────────────────────────────────────────────────────────
+const summary = document.createElement('div');
+summary.className = 'summary';
+const allPass = failed === 0;
+summary.style.color = allPass ? '#4ade80' : '#f87171';
+summary.textContent = `${allPass ? '✓ All' : '✗'} ${passed + failed} tests — ${passed} passed, ${failed} failed`;
+out.appendChild(summary);
+</script>
+</body>
+</html>

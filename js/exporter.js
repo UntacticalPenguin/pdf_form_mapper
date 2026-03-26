@@ -2,6 +2,7 @@
 
 import { getAllRects, loadRects, validate } from './rect-manager.js';
 import { reRenderAllRects } from './interactions.js';
+import { matchRectsToAnnotations } from './coord-utils.js';
 
 export function initExporter(renderer) {
   document.getElementById('btn-dl-json').addEventListener('click', () => _downloadJson());
@@ -65,38 +66,15 @@ async function _downloadCsv(renderer) {
     const wrapper = document.querySelector(`.page-wrapper[data-page="${pageNum}"]`);
     if (!wrapper) continue;
 
-    // Use getBoundingClientRect for consistency with how rect percentages were stored in interactions.js
-    const wrapperBcr = wrapper.getBoundingClientRect();
-    const W = wrapperBcr.width;
-    const H = wrapperBcr.height;
-    const pdfPageHeight = H / scale;
+    // offsetWidth/offsetHeight are CSS layout dimensions (zoom-independent).
+    // getBoundingClientRect() would return post-zoom viewport dimensions and break matching.
+    const pageW = wrapper.offsetWidth;
+    const pageH = wrapper.offsetHeight;
 
-    for (const rect of rects) {
-      // Convert rect percentage coords → canvas pixels
-      const rL = rect.x_pct * W;
-      const rT = rect.y_pct * H;
-      const rR = rL + rect.w_pct * W;
-      const rB = rT + rect.h_pct * H;
-
-      let bestAnn = null;
-      let bestOverlap = 0;
-
-      for (const ann of pageAnnotations) {
-        // ann.rect is in PDF coords: [x1, y1, x2, y2], origin bottom-left
-        const [x1, y1, x2, y2] = ann.rect;
-        const aL = x1 * scale;
-        const aT = (pdfPageHeight - y2) * scale;
-        const aR = x2 * scale;
-        const aB = (pdfPageHeight - y1) * scale;
-
-        const overlapX = Math.max(0, Math.min(rR, aR) - Math.max(rL, aL));
-        const overlapY = Math.max(0, Math.min(rB, aB) - Math.max(rT, aT));
-        const overlap = overlapX * overlapY;
-        if (overlap > bestOverlap) { bestOverlap = overlap; bestAnn = ann; }
-      }
-
-      const fieldId = bestAnn
-        ? (bestAnn.fieldName || bestAnn.id || `unknown_p${pageNum}`)
+    const matches = matchRectsToAnnotations(rects, pageAnnotations, pageW, pageH, scale);
+    for (const { rect, ann } of matches) {
+      const fieldId = ann
+        ? (ann.fieldName || ann.id || `unknown_p${pageNum}`)
         : `no_match_p${pageNum}`;
       rows.push([rect.label, fieldId]);
     }
