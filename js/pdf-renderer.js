@@ -80,21 +80,28 @@ async function _handleFileSelect(e) {
 async function _renderAllPages() {
   const container = document.getElementById('pages-container');
   container.innerHTML = '';
+  const dpr = window.devicePixelRatio || 1;
 
   for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
     const page = await pdfDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: renderScale });
+    // cssViewport drives layout and coordinate math (renderScale, unchanged)
+    const cssViewport = page.getViewport({ scale: renderScale });
+    // hiResViewport renders at physical pixels for sharp display on HiDPI screens
+    const hiResViewport = page.getViewport({ scale: renderScale * dpr });
 
     const wrapper = document.createElement('div');
     wrapper.className = 'page-wrapper';
     wrapper.dataset.page = pageNum;
-    wrapper.style.width = `${viewport.width}px`;
-    wrapper.style.height = `${viewport.height}px`;
+    wrapper.style.width  = `${cssViewport.width}px`;
+    wrapper.style.height = `${cssViewport.height}px`;
 
     const canvas = document.createElement('canvas');
-    canvas.width = Math.round(viewport.width);
-    canvas.height = Math.round(viewport.height);
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    canvas.width  = Math.round(hiResViewport.width);
+    canvas.height = Math.round(hiResViewport.height);
+    // CSS size stays at layout dimensions so nothing shifts
+    canvas.style.width  = `${cssViewport.width}px`;
+    canvas.style.height = `${cssViewport.height}px`;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: hiResViewport }).promise;
 
     const overlay = document.createElement('div');
     overlay.className = 'page-overlay';
